@@ -1,115 +1,110 @@
+/* src/SidebarEditor.js */
+
 import React, { useState } from 'react';
 
-const SidebarEditor = ({ initialContent, onSave }) => {
-  const [content, setContent] = useState(initialContent);
+const SidebarEditor = ({ field, content, onSave, onClose }) => {
+  const [editableContent, setEditableContent] = useState(content[field]);
 
+  // Handle change for text or color inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setContent({ ...content, [name]: value });
+    setEditableContent({ ...editableContent, [name]: value });
   };
 
-  const handleFileChange = (e) => {
+  // Handle change for sliders (only for image width/height adjustments)
+  const handleSliderChange = (name, value) => {
+    setEditableContent((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle image selection
+  const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => {
-        setContent({ ...content, headerImage: reader.result });
+      reader.onload = (upload) => {
+        setEditableContent({ ...editableContent, src: upload.target.result });
       };
       reader.readAsDataURL(file);
     }
   };
 
+  // Save updated content
   const handleSave = () => {
-    onSave(content);
+    onSave({ [field]: editableContent });
+    onClose();
   };
 
   return (
-    <aside style={styles.sidebar}>
-      <h2 style={styles.heading}>Edit Content</h2>
+    <aside style={{ width: '300px', padding: '20px', backgroundColor: '#f4f4f4', borderLeft: '1px solid #ddd' }}>
+      <button onClick={onClose} style={{ float: 'right', fontSize: '1.2em' }}>✖️</button>
+      <h2>Edit {field === 'headerText' || field === 'bodyText' ? 'Text' : 'Image'}</h2>
 
-      <label style={styles.label}>
-        Header Text:
-        <input type="text" name="headerText" value={content.headerText} onChange={handleChange} style={styles.input} />
-      </label>
+      {field === 'headerText' || field === 'bodyText' ? (
+        <div>
+          <label>
+            Text:
+            <textarea
+              name={field}
+              value={editableContent}
+              onChange={(e) => setEditableContent(e.target.value)}
+              style={{ width: '100%', minHeight: '80px' }}
+            />
+          </label>
+        </div>
+      ) : field === 'headerImage' ? (
+        <div>
+          <label>
+            Image URL:
+            <input
+              type="text"
+              name="src"
+              value={editableContent.src}
+              onChange={handleChange}
+              style={{ width: '100%' }}
+            />
+          </label>
+          <label>
+            Select Image:
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              style={{ width: '100%' }}
+            />
+          </label>
+          <label>
+            Width (%):
+            <input
+              type="range"
+              name="width"
+              min="10"
+              max="100"
+              value={editableContent.width}
+              onChange={(e) => handleSliderChange('width', e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </label>
+          <label>
+            Height (%):
+            <input
+              type="range"
+              name="height"
+              min="10"
+              max="100"
+              value={editableContent.height}
+              onChange={(e) => handleSliderChange('height', e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </label>
+          <div style={{ marginTop: '10px', textAlign: 'center' }}>
+            <img src={editableContent.src} alt="Preview" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+          </div>
+        </div>
+      ) : null}
 
-      <label style={styles.label}>
-        Body Text:
-        <textarea name="bodyText" value={content.bodyText} onChange={handleChange} style={styles.textarea} />
-      </label>
-
-      <label style={styles.label}>
-        Header Image:
-        <input type="file" accept="image/*" onChange={handleFileChange} style={styles.fileInput} />
-      </label>
-
-      <label style={styles.label}>
-        Background Color:
-        <input type="color" name="backgroundColor" value={content.backgroundColor} onChange={handleChange} style={styles.colorInput} />
-      </label>
-
-      <button onClick={handleSave} style={styles.saveButton}>Save</button>
+      <button onClick={handleSave} style={{ marginTop: '20px', width: '100%' }}>Save</button>
     </aside>
   );
 };
 
 export default SidebarEditor;
-
-const styles = {
-  sidebar: {
-    width: '300px',
-    padding: '20px',
-    backgroundColor: '#f7f9fc',
-    borderLeft: '1px solid #ddd',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px',
-    boxShadow: '0px 0px 10px rgba(0,0,0,0.1)',
-    borderRadius: '10px',
-  },
-  heading: {
-    fontSize: '1.5em',
-    color: '#333',
-    marginBottom: '10px',
-  },
-  label: {
-    display: 'flex',
-    flexDirection: 'column',
-    fontSize: '0.9em',
-    color: '#555',
-  },
-  input: {
-    padding: '8px',
-    fontSize: '1em',
-    marginTop: '5px',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-  },
-  textarea: {
-    padding: '8px',
-    fontSize: '1em',
-    marginTop: '5px',
-    height: '80px',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    resize: 'vertical',
-  },
-  fileInput: {
-    marginTop: '5px',
-  },
-  colorInput: {
-    width: '50px',
-    height: '30px',
-    marginTop: '5px',
-    border: 'none',
-  },
-  saveButton: {
-    padding: '10px 20px',
-    backgroundColor: '#007bff',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '1em',
-    transition: 'background-color 0.3s',
-  },
-};
